@@ -15,7 +15,7 @@
 }
 
 pre > code {
-  @apply max-h-80 overflow-y-auto;
+  @apply max-h-80;
 }
 
 /* Code block styles */
@@ -24,7 +24,7 @@ pre > code {
 }
 
 .code-line {
-  @apply -mx-4 block border-l-4 border-transparent px-5;
+  @apply -mx-4 block border-l-4 border-transparent pl-4 pr-4;
 }
 .code-line:hover {
   @apply bg-gray-700 bg-opacity-80;
