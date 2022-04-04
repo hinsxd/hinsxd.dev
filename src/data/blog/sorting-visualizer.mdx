@@ -6,7 +6,7 @@ draft: false
 summary: Learn Generator functions by building a sorting visualizer from scratch
 ---
 
-Inspired by Clément Mihailescu's [video](https://www.youtube.com/watch?v=pFXYym4Wbkc) in building a sorting visualizer, I decided to build one by myself before watching the video. The first idea I could think of is **ES6 generator functions**.
+Inspired by Clément Mihailescu's [video](https://www.youtube.com/watch?v=pFXYym4Wbkc) in building a sorting visualizer, I decided to build one by myself before watching the video. The first idea I could think of is **ES6 generator functions**. This article meant to be a step-by-step tutorial just like how I was building it at first. I will describe how I formulate the problem, what I tried and what I chose. Let's go!
 
 [GitHub repository](https://github.com/hinsxd/sorting-visualizer) | [Demo](https://sortvis.hinsxd.vercel.app/)
 
@@ -442,7 +442,7 @@ export function* mergeSort(
   arr: number[],
   i = 0,
   j = arr.length - 1
-): Generator<StepState, StepState> {
+): SortingGenerator {
   const middle = Math.floor((j - i) / 2) + i;
 
   // Step 1,2,3
@@ -470,7 +470,7 @@ export function* merge(
   i: number,
   middle: number,
   j: number
-): Generator<StepState, StepState> {
+): SortingGenerator {
   let left = i;
   let right = middle + 1;
   const sorted: number[] = [];
@@ -613,9 +613,9 @@ const reset = useCallback(() => {
 
 ### Abstracting the logic into a custom hook with callbacks
 
-For DX and maintainability.
+For DX and maintainability and keeping the main file clean. We can abstract the logic into a custom hook.
 
-```tsx
+```ts
 const { algorithmKey, setAlgorithmKey, reset, nextStep, sortState } =
   useSorting({
     onReset: () => {},
