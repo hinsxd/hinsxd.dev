@@ -10,6 +10,7 @@ import siteMetadata from "@/data/siteMetadata";
 import ScrollTopAndComment from "@/components/ScrollTopAndComment";
 import { PostFrontMatter } from "@/types/PostFrontMatter";
 import { AuthorFrontMatter } from "@/types/AuthorFrontMatter";
+import Comments from "@/components/comments";
 
 const editUrl = (fileName) =>
   `${siteMetadata.siteRepo}/blob/master/data/blog/${fileName}`;
@@ -130,7 +131,7 @@ export default function PostLayout({
                 {` • `}
                 <Link href={editUrl(fileName)}>{"View on GitHub"}</Link>
               </div>
-              {/* <Comments frontMatter={frontMatter} /> */}
+              <Comments frontMatter={frontMatter} />
             </div>
             <footer>
               <div className="divide-gray-200 text-sm font-medium leading-5 dark:divide-gray-700 xl:col-start-1 xl:row-start-2 xl:divide-y">
