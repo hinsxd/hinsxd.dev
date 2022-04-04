@@ -12,7 +12,7 @@ Inspired by Clément Mihailescu's [video](https://www.youtube.com/watch?v=pFXYym
 
 ## Generator functions
 
-For those who dont know what generator functions are, basically they are functions that can be paused and resumed. Generator function itself (`function*`) is a function that returns a generator object. You can think it as a blueprint for creating a factory, and the generator, aka the factory, will spit out the values that are `yield`ed by the factory.
+For those who don't know what generator functions are, basically they are functions that can be paused and resumed. Generator function itself (`function*`) is a function that returns a generator object. You can think it as a blueprint for creating a factory, and the generator, aka the factory, will spit out the values that are `yield`ed by the factory.
 
 ```ts
 // Generator function
@@ -142,7 +142,7 @@ Let's draw some vertical bars filling the screen to represent the array values. 
 
 I chose to use SVG instead of normal divs because it is easier to position the bars. We can simply place the bars at certain % position and that's it!
 
-The SVG coordinates starts from top-left but I want the bars to stick to bottom, so I inverted the axis by applying `transform: scaleY(-1);` to the svg container
+The SVG coordinates starts from top-left but I want the bars to stick to bottom, so I inverted the axis by applying `transform: scaleY(-1);` to the svg container.
 
 ```css:styles.css
 html,

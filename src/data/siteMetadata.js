@@ -1,7 +1,7 @@
 const siteMetadata = {
   title: "hinsxd's blog",
   author: "Alvin Li",
-  headerTitle: "hinsxd.dev",
+  headerTitle: "hinsxd",
   description: "A blog to share my thoughts and experiences",
   language: "en-us",
   theme: "dark", // system, dark or light
@@ -9,7 +9,7 @@ const siteMetadata = {
   siteRepo: "https://github.com/hinsxd/hinsxd.dev",
   siteLogo: "/static/images/avatar.png",
   image: "/static/images/avatar.png",
-  socialBanner: "/static/images/twitter-card.png",
+  socialBanner: "/static/images/social-banner.png",
   email: "admin@hinsxd.dev",
   github: "https://github.com/hinsxd",
   // twitter: "https://twitter.com/Twitter",
