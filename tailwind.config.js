@@ -1,21 +1,12 @@
 // @ts-check
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-const defaultTheme = require("tailwindcss/defaultTheme")
-const colors = require("tailwindcss/colors")
+const defaultTheme = require("tailwindcss/defaultTheme");
+const colors = require("tailwindcss/colors");
 
 /** @type {import("tailwindcss/tailwind-config").TailwindConfig } */
 module.exports = {
-  experimental: {
-    optimizeUniversalDefaults: true,
-  },
-  content: [
-    "./pages/**/*.tsx",
-    "./components/**/*.tsx",
-    "./layouts/**/*.tsx",
-    "./lib/**/*.ts",
-    "./data/**/*.mdx",
-  ],
+  content: ["./src/**/*.{tsx,ts,mdx}"],
   darkMode: "class",
   theme: {
     extend: {
@@ -170,4 +161,4 @@ module.exports = {
     },
   },
   plugins: [require("@tailwindcss/forms"), require("@tailwindcss/typography")],
-}
+};
