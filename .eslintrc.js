@@ -1,6 +1,29 @@
 module.exports = {
-  extends: ["@hinsxd/eslint-config"],
+  root: true,
+  parser: "@typescript-eslint/parser",
+  env: {
+    browser: true,
+    amd: true,
+    node: true,
+    es6: true,
+  },
+  plugins: ["@typescript-eslint"],
+  extends: [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:jsx-a11y/recommended",
+    "plugin:prettier/recommended",
+    "next",
+    "next/core-web-vitals",
+  ],
+  parserOptions: {
+    project: true,
+    tsconfigRootDir: __dirname,
+  },
   rules: {
+    "prettier/prettier": "warn",
+    "react/react-in-jsx-scope": "off",
     "jsx-a11y/anchor-is-valid": [
       "error",
       {
@@ -10,10 +33,10 @@ module.exports = {
       },
     ],
     "react/prop-types": "off",
+    "@typescript-eslint/no-unused-vars": "off",
     "react/no-unescaped-entities": "off",
     "@typescript-eslint/explicit-module-boundary-types": "off",
     "@typescript-eslint/no-var-requires": "off",
     "@typescript-eslint/ban-ts-comment": "off",
-    "import/no-unresolved": "off",
   },
-}
+};

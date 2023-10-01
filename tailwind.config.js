@@ -1,18 +1,13 @@
 // @ts-check
-/* eslint-disable @typescript-eslint/no-var-requires */
-
-const defaultTheme = require("tailwindcss/defaultTheme");
+const { fontFamily } = require("tailwindcss/defaultTheme");
 const colors = require("tailwindcss/colors");
 
-/** @type {import("tailwindcss/tailwind-config").TailwindConfig } */
+/** @type {import("tailwindcss/types").Config } */
 module.exports = {
-  content: ["./src/**/*.{tsx,ts,mdx}"],
+  content: ["./node_modules/pliny/**/*.js", "./src/**/*.{js,ts,jsx,tsx}"],
   darkMode: "class",
   theme: {
     extend: {
-      spacing: {
-        "9/16": "56.25%",
-      },
       lineHeight: {
         11: "2.75rem",
         12: "3rem",
@@ -20,14 +15,13 @@ module.exports = {
         14: "3.5rem",
       },
       fontFamily: {
-        sans: ["InterVariable", ...defaultTheme.fontFamily.sans],
+        sans: ["var(--font-main)", ...fontFamily.sans],
       },
       colors: {
         primary: colors.teal,
-        //@ts-ignore
-        gray: colors.neutral, // TODO: Remove ts-ignore after tw types gets updated to v3
+        gray: colors.neutral,
       },
-      typography: (theme) => ({
+      typography: ({ theme }) => ({
         DEFAULT: {
           css: {
             color: theme("colors.gray.700"),
@@ -37,6 +31,11 @@ module.exports = {
                 color: `${theme("colors.primary.600")} !important`,
               },
               code: { color: theme("colors.primary.400") },
+            },
+            "h1,h2,h3,h4,h5,h6": {
+              code: {
+                color: theme("colors.pink.500"),
+              },
             },
             h1: {
               fontWeight: "700",
@@ -96,7 +95,7 @@ module.exports = {
             },
           },
         },
-        dark: {
+        invert: {
           css: {
             color: theme("colors.gray.300"),
             a: {
