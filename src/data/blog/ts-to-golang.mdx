@@ -443,10 +443,23 @@ for i, v := range arr {
 }
 ```
 
-## 1.5 Type alias
+## 1.5 Type definition and type alias
 
-Type alias is used to give a type another name, and it is useful when you want to give a more descriptive name to a type.
-We can also define custom methods on a type alias. This will be discussed more in the next section.
+### 1.5.1 Type definition
+
+We can define custom types using the `type TypeName Definition` keyword.
+While the most common use case is to define structs, we can also define custom types for primitive types.
+
+With custom types, we can define methods on them, which we will talk about later.
+
+```go
+
+type MyStruct struct {
+  //          ^ type definition starts here
+  name string
+  age int
+}
+```
 
 ```go
 type MyInt int
@@ -457,4 +470,391 @@ func (i MyInt) addOne() MyInt {
 
 var a MyInt = 1
 fmt.Println(a.addOne()) // 2
+
+var b int = 1
+fmt.Println(b.addOne()) // Error: cannot call pointer method on b (variable of type int)
+
+// We can convert a int to MyInt
+var c = MyInt(b)
+fmt.Println(c.addOne()) // 2
 ```
+
+### 1.5.2 Type alias
+
+Type alias is used to give a new name to an existing type. The newly named type will behave identically with the original type.
+
+```go
+type NumberList = []int
+// Now NumberList is an alias for []int,
+```
+
+# 2. Functions, Methods and Interfaces
+
+## 2.1 Functions
+
+Functions are defined using the `func` keyword, and they can be defined at the package level or inside another function.
+
+```go
+// Function at package level
+// A function that takes an int and returns an int
+func addOne(a int) int {
+  return a + 1
+}
+
+func main() {
+  // Function inside another function
+  addTwo := func(a int) int {
+    return a + 2
+  }
+
+  fmt.Println(addOne(1)) // 2
+  fmt.Println(addTwo(1)) // 3
+}
+```
+
+We can also define new types for functions, and use them as function parameters.
+
+This concept is similar to typescript function types and providing reusability and type safety for callbacks.
+
+```go
+type IntProcessor func(int) int
+
+func processInt(a int, processor IntProcessor) int {
+  return processor(a)
+}
+
+func addOne(v int) int {
+  return v + 1
+}
+func double(v int) int {
+  return v + 1
+}
+
+func main() {
+  fmt.Println(processInt(1, addOne)) // 2
+  fmt.Println(processInt(5, double)) // 10
+}
+```
+
+The Typescript version looks almost identical:
+
+```ts
+type IntProcessor = (v: number) => number;
+
+function processInt(a: number, processor: IntProcessor): number {
+  return processor(a);
+}
+
+function addOne(v: number): number {
+  return v + 1;
+}
+
+function double(v: number): number {
+  return v + 1;
+}
+
+console.log(processInt(1, addOne)); // 2
+console.log(processInt(5, double)); // 10
+```
+
+## 2.2 Methods ([Docs](https://golang.org/ref/spec#Method_declarations))
+
+> A method is a function with a receiver.
+
+The term `method` is almost the same as class methods in Typescript, but there are some differences.
+
+Golang:
+
+```go
+type Person struct {
+  name string
+  age int
+}
+
+// This is a method of Person
+func (p Person) getName() string {
+  //  ^ receiver. Similar to "this" in Typescript
+  return p.name
+}
+```
+
+Typescript:
+
+```ts
+class Person {
+  name: string;
+  age: number;
+
+  // This is a method of Person
+  getName(): string {
+    return this.name;
+  }
+}
+```
+
+There are two types of methods in Golang: value receiver and pointer receiver.
+
+### 2.2.1 Value receiver
+
+**Value** receivers get a **copy** of the variable whenever the method is called, meaning that any changes to the variable inside the method **will not** affect the original one.
+
+```go
+func (p Person) getName() string {
+  //  ^ value receiver
+  return p.name
+}
+func (p Person) setName(name string) string {
+  //  ^ value receiver
+  p.name = name
+}
+
+var person Person = Person{
+  name: "hinsxd",
+  age: 18,
+}
+
+fmt.Println(person.getName()) // hinsxd
+person.setName("hinsxd2")
+fmt.Println(person.getName()) // name is still "hinsxd"
+```
+
+### 2.2.2 Pointer receiver
+
+**Pointer** receivers get a **reference** to the variable whenever the method is called, meaning that any changes to the variable inside the method **will** affect the original one.
+
+```go
+func (*p Person) getName() string {
+  //  ^ pointer receiver
+  return p.name
+}
+func (*p Person) setName(name string) string {
+  //  ^ pointer receiver
+  p.name = name
+}
+
+var person Person = Person{
+  name: "hinsxd",
+  age: 18,
+}
+
+fmt.Println(person.getName()) // hinsxd
+person.setName("hinsxd2")
+fmt.Println(person.getName()) // name is changed to "hinsxd2"
+```
+
+### 2.2.3 Methods on non-struct types
+
+We can also define methods on non-struct types, such as custom primitive types.
+
+```go
+type MyInt int
+
+func (i MyInt) addOne() MyInt {
+  return i + 1
+}
+
+var a MyInt = 1
+fmt.Println(a.addOne()) // 2
+
+var b int = 1
+fmt.Println(b.addOne()) // Error: b.addOne undefined (type int has no field or method addOne)
+
+// We can convert a int to MyInt
+var c = MyInt(b)
+fmt.Println(c.addOne()) // 2
+```
+
+### 2.2.4 Method sets ([Docs](https://golang.org/ref/spec#Method_sets), [FAQ - Why do T and \*T have different method sets?](https://go.dev/doc/faq#different_method_sets))
+
+When defining a method, we are making either `T` or `*T` implement the method.
+
+The method set of a pointer type `*T` is the set of all methods declared with receiver `*T` or `T`,
+while the method set of a non-pointer (concrete) type `T` is the set of all methods declared with receiver `T` only.
+
+<u>
+  This is reasonable because, according to the offical FAQ, we can easily obtain
+  the value by dereferencing the pointer, but we cannot obtain the pointer from
+  the **copied** value.
+</u>
+
+In the following example, `*Person` implements the method `updateName`, and `Person` implements the method `getName`.
+We can say `*Person` also implements the method `getName` because `Person` implements it, but we cannot say `Person` implements the method `updateName`.
+
+Although for convenience ([tutorial](https://go.dev/tour/methods/6), [tutorial](https://go.dev/tour/methods/7)), Golang allows us to call any methods on both the non-pointer type and the pointer type, it does not mean that the non-pointer or pointer type implements the method.
+
+This concept is important when we want to define methods on interfaces, which we will talk about later.
+
+```go
+func (p *Person) updateName(name string) { ... }
+func (p Person) getName() string{ ... }
+
+value := Person{...}
+value.updateName("hinsxd") // OK
+value.getName() // OK
+
+pointer := &p
+pointer.updateName("hinsxd") // OK
+pointer.getName() // OK
+```
+
+### 2.2.5 When to use value receiver and pointer receiver?
+
+1. If the method needs to modify the receiver, the receiver must be a pointer.
+2. If the receiver is a large struct, a pointer receiver is more efficient than a value receiver, as it does not need to copy the struct every time the method is called.
+
+## 2.3 Interfaces ([Docs](https://golang.org/ref/spec#Interface_types))
+
+> An interface type defines a type set. A variable of interface type can store a value of any type that is in the type set of the interface. Such a type is said to implement the interface. The value of an uninitialized variable of interface type is nil.
+
+### 2.3.1 Basic Interfaces
+
+**Basic** Interfaces are interfaces that only include a list of methods (possibly none). Any type that implements all the methods in the interface is said to have implemented the interface.
+
+```go
+type Person interface {
+  getName() string
+}
+
+type Student struct {
+  name string
+}
+
+// Student has the method `getName`, so it implements the interface `Person`
+func (s Student) getName() string {
+  return s.name
+}
+
+type RandomGuy struct {
+  id int
+}
+
+// Although a Random does not has a field `name`, it still has a method `getName`, so it implements the interface `Person` too.
+func (r RandomGuy) getName() string {
+  return fmt.Sprintf("RandomGuy %d", r.id)
+}
+```
+
+In the above example, we can see that an interface does not care about the internal structure of the type, it only cares about the methods.
+
+#### Using interfaces - Variable assignment
+
+We can assign a value of a type to a variable of an interface type if the type implements the interface.
+
+```go
+var student Student = Student{
+  name: "hinsxd",
+}
+var person Person = student // OK
+
+var randomGuy Person = RandomGuy{
+  id: 1,
+} // OK
+```
+
+#### Using interfaces - Function parameters
+
+We can use interfaces as function parameters, and the function can accept any type that implements the interface.
+
+```go
+func printName(person Person) {
+  fmt.Println(person.getName())
+}
+
+var student Student = Student{
+  name: "hinsxd",
+}
+printName(student) // hinsxd
+
+var randomGuy RandomGuy = RandomGuy{
+  id: 1,
+}
+printName(randomGuy) // RandomGuy 1
+```
+
+#### Using interfaces - Type assertion
+
+Suppose we have an interface value `i` and a concrete type `T`, we can assert the interface value `i` to the type `T` in two ways:
+
+```go
+// 1. Assert to a type, panic if the type assertion fails
+v := i.(T)
+
+// 2. Assert to a type. When failing, return the zero value of type T and false
+v, ok := i.(T)
+```
+
+In the above example, the first way returns a single value of type `T` if the assertion succeeds, and panics otherwise.
+It can come handy when we want to use the result directly, and we are sure that the assertion will succeed.
+
+In other cases, we should use the second way, as it is more safe and idiomatic.
+
+Example of using the second way with the `Person` interface:
+
+```go
+func checkPermission(person Person) bool {
+  // Assert `person` to `Student`, and check if the assertion succeeds
+  if student, ok := person.(Student); ok {
+    // If type assertion succeeds, the person is a student, we can let him in
+    return true
+  }
+  // The person is not a student and not permitted to enter!
+  return false
+}
+```
+
+#### Caveat: Pointer and non-pointer types
+
+Remember the method sets we talked about earlier? It is important when we want to define methods on interfaces.
+
+Using the above example with `Person`, `Student` and `RandomGuy`, we can see that both `Student` and `RandomGuy` implement the interface `Person`, and it can be assigned to a variable of type `Person`.
+
+```go
+func (s Student) getName() string
+func (r RandomGuy) getName() string
+
+var person Person = Student{...} // OK
+var person Person = RandomGuy{...} // OK
+```
+
+Originally we chose to use a value receiver for the method `getName` because we don't need to modify the receiver.
+Now we want to modify the name of the a `Person`, so we add a method `setName` to the interface `Person`.
+
+```go
+type Person interface {
+  getName() string
+  setName(name string)
+}
+```
+
+As a result, we need to implement the method `setName` for both `Student` and `RandomGuy`. This method needs to modify the receiver, so we have to use a pointer receiver.
+
+```go
+func (s *Student) setName(name string) {
+  s.name = name
+}
+
+func (r *RandomGuy) setName(name string) {
+  // random guy doesn't have a name, just ignore it
+}
+```
+
+However, the method set of `Student` does not include the method `setName`, so `Student` does not implement the interface `Person` anymore.
+On the other hand, the method set of `*Student` includes the method `setName`, so `*Student` implements the interface `Person`.
+
+So, we need to pass the pointer of `Student` to the interface `Person`.
+
+```diff-go {---4}
+func (s Student) getName() string
+func (s *Student) setName(name string)
+
+- var person Person = Student{...} // Error: cannot use Student{…} (value of type Student) as Person value in variable declaration: Student does not implement Person (method updateName has pointer receiver)
++ var person Person = &Student{...} // OK
+```
+
+In order to avoid confusion and breaking changes in code, we should carefully plan and choose between value receiver and pointer receiver when defining methods on interfaces.
+
+### 2.3.2 Empty Interfaces (`interface{}`, `any`)
+
+Empty interfaces are interfaces that do not have any methods, and any type with 0 or more methods implements the empty interface.
+
+`any` is an alias for `interface{}` since Go 1.18.

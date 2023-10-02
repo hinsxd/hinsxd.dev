@@ -13,6 +13,10 @@
 .remark-code-title + div > pre {
   @apply mt-0 rounded-t-none;
 }
+/* 
+.prose pre {
+  padding-left: 0 !important;
+} */
 
 /* Code block styles */
 .code-highlight {
@@ -37,7 +41,17 @@
 
 .line-number::before {
   @apply mr-4 -ml-2 inline-block w-4 text-right text-gray-400;
+  /* @apply -ml-2 inline-block w-[5ch] pr-[1ch] text-right text-gray-400 bg-gray-700; */
   content: attr(line);
+}
+
+.line-number.deleted::before,
+.line-number.inserted::before {
+  margin-right: calc(1rem - 1ch);
+}
+
+.line-number:not(.deleted, .inserted)::before {
+  margin-right: calc(1rem + 1ch);
 }
 
 /* Token styles */
