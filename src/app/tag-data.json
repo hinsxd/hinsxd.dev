@@ -1,1 +1,8 @@
-{ "code": 1, "visualization": 1, "sorting": 1 }
+{
+  "golang": 1,
+  "typescript": 1,
+  "learning-notes": 1,
+  "code": 1,
+  "visualization": 1,
+  "sorting": 1
+}
