@@ -25,7 +25,9 @@ As a result, Chu2track will be the first project I use Golang in production (som
 I will probably write another post about how I choose the tools to satisfy my needs, but for now, let's focus on the language itself.
 In this post, I will be including many links to the official documentation, so you can read more about the topics that interest you.
 
-# Learning notes
+<TOCInline toc={props.toc} indentDepth={2} asDisclosure toHeading={3} />
+
+<br></br>
 
 # 1. Types and Variables
 
@@ -414,6 +416,8 @@ a = b
 ```
 
 To convert a variable to another type, you can use the following syntax: `T(x)`, where `T` is the type you want to convert to, and `x` is the variable you want to convert.
+
+**_Don't mix it up with a function call! When confused, take a deep breath and check whether `T` is a type or a function!_**
 
 We should note that only convert a variable `x` to a type `T` if `x` is representable by a value of `T` (Read more: [Representability](https://go.dev/ref/spec#Representability))
 
