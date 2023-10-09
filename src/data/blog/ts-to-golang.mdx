@@ -1,5 +1,5 @@
 ---
-title: Learning notes - Jumping from TypeScript to Golang
+title: Learning notes - Jumping from TypeScript to Golang (1)
 date: "2023-10-02"
 tags: ["golang", "typescript", "learning-notes"]
 draft: false
@@ -862,3 +862,31 @@ In order to avoid confusion and breaking changes in code, we should carefully pl
 Empty interfaces are interfaces that do not have any methods, and any type with 0 or more methods implements the empty interface.
 
 `any` is an alias for `interface{}` since Go 1.18.
+
+Since empty interfaces do not have any methods, we can assign any type to a variable of type `interface{}`.
+
+```go
+var a interface{} = 1
+var b interface{} = "Hello World"
+var c interface{} = []int{1, 2, 3}
+```
+
+Empty interfaces are useful when we want to create a function that accepts any type.
+We have to use type assertion to get the value of the interface.
+
+```go
+func printType(v interface{}) {
+  switch v.(type) {
+  case int:
+    fmt.Println("It's an int!")
+  case string:
+    fmt.Println("It's a string!")
+  case []int:
+    fmt.Println("It's a slice of int!")
+  }
+}
+
+printType(1) // It's an int!
+printType("Hello World") // It's a string!
+printType([]int{1, 2, 3}) // It's a slice of int!
+```
