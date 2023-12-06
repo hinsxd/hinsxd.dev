@@ -847,7 +847,7 @@ On the other hand, the method set of `*Student` includes the method `setName`, s
 
 So, we need to pass the pointer of `Student` to the interface `Person`.
 
-```diff-go {---4}
+```diff-go
 func (s Student) getName() string
 func (s *Student) setName(name string)
 
