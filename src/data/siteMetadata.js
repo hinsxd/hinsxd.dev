@@ -30,11 +30,12 @@ const siteMetadata = {
     //   plausibleDataDomain: '', // e.g. tailwind-nextjs-starter-blog.vercel.app
     // },
     // simpleAnalytics: {},
-    // posthogAnalytics: {
-    //   posthogProjectApiKey: '', // e.g. 123e4567-e89b-12d3-a456-426614174000
-    // },
+    posthogAnalytics: {
+      posthogProjectApiKey: "phc_N39jXBwRS8e8wANizIdyuUxJwj8rRDwaVUJvYT2z5zK", // e.g. 123e4567-e89b-12d3-a456-426614174000
+      apiHost: "https://us.i.posthog.com",
+    },
     googleAnalytics: {
-      googleAnalyticsId: 'G-89PRW6W51H', // e.g. G-XXXXXXX
+      googleAnalyticsId: "G-4RKE6HJK7F", // e.g. G-XXXXXXX
     },
   },
   newsletter: {
