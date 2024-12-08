@@ -1,0 +1,147 @@
+---
+title: Advent of Code 2023 - Day 2
+date: '2023-12-06'
+tags: ['advent-of-code', '2023', 'javascript', 'code']
+draft: false
+summary: Advent of Code 2023 - Day 2
+---
+
+Day 2 is a very straightforward one.
+
+# Part 1
+
+You play several games and record the information from each game (your puzzle input). Each game is listed with its ID number (like the 11 in Game 11: ...) followed by a semicolon-separated list of subsets of cubes that were revealed from the bag (like 3 red, 5 green, 4 blue).
+
+```
+Game 1: 3 blue, 4 red; 1 red, 2 green, 6 blue; 2 green
+Game 2: 1 blue, 2 green; 3 green, 4 blue, 1 red; 1 green, 1 blue
+Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
+Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
+Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green
+```
+
+In game 1, three sets of cubes are revealed from the bag (and then put back again). The first set is 3 blue cubes and 4 red cubes; the second set is 1 red cube, 2 green cubes, and 6 blue cubes; the third set is only 2 green cubes.
+
+The Elf would first like to know which games would have been **possible** if the bag contained only **12 red cubes, 13 green cubes, and 14 blue cubes**?
+
+# Interpretation
+
+This sounds like an IQ question to me. The answer to this question is, if anytime the elf reveals more than 12 red cubes, 13 green cubes, or 14 blue cubes, then the game is not possible.
+
+# Solution
+
+The idea is to check each reveal and see if it is possible. If all the reveals are possible, then the game is possible.
+
+## First way
+
+```javascript
+function checkReveal(str) {
+  // str is like "3 blue, 4 red, 5 green"
+  for (const ball of str.split(', ')) {
+    const [numStr, color] = ball.split(' ')
+    const num = parseInt(numStr)
+    if (color === 'red' && num > 12) return false
+    if (color === 'green' && num > 13) return false
+    if (color === 'blue' && num > 14) return false
+  }
+  return true
+}
+// checkReveal("3 blue, 4 red, 5 green") // true
+// checkReveal("3 blue, 4 red, 15 green") // false
+
+export function part1(input) {
+  const lines = input.split('\n')
+
+  let sum = 0
+  for (const game of lines) {
+    const [gameText, infoText] = game.split(': ')
+    const id = gameText.replace('Game ', '').trim()
+    const possible = infoText.split('; ').every((reveal) => checkReveal(reveal))
+    if (possible) {
+      sum += parseInt(id)
+    }
+  }
+  return sum
+}
+```
+
+## Second way
+
+But I thought the AOC will not be that simple in the second part. I might need to keep track of the number of balls in the bag.
+
+In the alternative solution, I keep track of how many red, green and blue balls **at least** in the bag. At the end, if all of the numbers fulfills the requirement, then the game is possible.
+
+For example, `3 blue, 2 red` and `4 blue, 1 red` indicates that there are at least 4 blue balls and 2 red balls in the bag.
+
+```javascript
+export function part1(input) {
+  const lines = input.split('\n')
+
+  let sum = 0
+  for (const game of lines) {
+    const [gameText, infoText] = game.split(': ')
+    const id = gameText.replace('Game ', '').trim()
+
+    const reveals = infoText.split('; ')
+    const leastNumOfBalls = { red: 0, blue: 0, green: 0 }
+    for (const reveal of reveals) {
+      const infos = reveal.split(', ').map((x) => x.split(' '))
+      for (const [numStr, color] of infos) {
+        const num = parseInt(numStr)
+        leastNumOfBalls[color] = Math.max(leastNumOfBalls[color], num)
+      }
+    }
+    const { red, blue, green } = leastNumOfBalls
+    if (red <= 12 && green <= 13 && blue <= 14) {
+      sum += parseInt(id)
+    }
+  }
+
+  return sum
+}
+```
+
+# Part 2
+
+I was quite surprised that the second part is really what I planned.
+
+**Question:**
+
+In each game you played, what is the fewest number of cubes of each color that could have been in the bag to make the game possible?
+
+The power (value) of a set of cubes is equal to the numbers of red, green, and blue cubes multiplied together.
+
+For each game, find the minimum set of cubes that must have been present. What is the sum of the power of these sets?
+
+## Solution
+
+With only a slight change to the second solution of Part 1, we can answer the question.
+
+```diff-javascript
+export function part1(input) {
+  const lines = input.split("\n");
+
+  let sum = 0;
+  for (const game of lines) {
+    const [gameText, infoText] = game.split(": ");
+    const id = gameText.replace("Game ", "").trim();
+
+    const reveals = infoText.split("; ");
+    const leastNumOfBalls = { red: 0, blue: 0, green: 0 };
+    for (const reveal of reveals) {
+      const infos = reveal.split(", ").map((x) => x.split(" "));
+      for (const [numStr, color] of infos) {
+        const num = parseInt(numStr);
+        leastNumOfBalls[color] = Math.max(leastNumOfBalls[color], num);
+      }
+    }
+    const { red, blue, green } = leastNumOfBalls;
+-     if (red <= 12 && green <= 13 && blue <= 14) {
+-       sum += parseInt(id);
+-     }
++     sum += red * green * blue;
+  }
+
+  return sum;
+}
+```

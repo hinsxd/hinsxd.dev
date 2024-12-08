@@ -1,0 +1,891 @@
+---
+title: Learning notes - Jumping from TypeScript to Golang (1)
+date: '2023-10-02'
+tags: ['golang', 'typescript', 'learning-notes', 'code']
+draft: false
+summary: Golang learning notes by a typescript wizard. Tears and blood.
+---
+
+# Background
+
+Recently, I decided to revamp my personal game tracking website [Chu2track](https://chu2track.hinsxd.dev).
+The old stack was Next.js 12, MongoDB, Type-Graphql in api routes.
+I was quite happy with the stack, but I found that GraphQL can be really hard to scale.
+While frontend devs can happily query whatever they want, backend devs have to be careful about the queries, otherwise it can be a huge performance issue.
+
+Also, I did not use the [Relay spec](https://relay.dev/docs/guides/graphql-server-specification/)
+when defining the schemas and resolvers, making it even harder to implement paginations and connections.
+(I can talk about the wrong design decisions for hours, but let's save it for another day).
+
+Anyways, then I thought, why not try something new? Golang has been a hot topic for a while, and I have been wanting to learn it for a long time.
+My co-workers have been using it in the past years and I notice the great performance it provided.
+Frankly speaking, their API didn't provide the best DX, but I think I can learn from their mistakes and make it better.
+
+As a result, Chu2track will be the first project I use Golang in production (some day).
+I will probably write another post about how I choose the tools to satisfy my needs, but for now, let's focus on the language itself.
+In this post, I will be including many links to the official documentation, so you can read more about the topics that interest you.
+
+<TOCInline toc={props.toc} indentDepth={2} asDisclosure toHeading={3} />
+
+<br></br>
+
+# 1. Types and Variables
+
+If you're same as me, a typescript wizard, you might find Golang a bit weird at first.
+
+Similar to Typescript, Golang is a statically typed language.
+However, compiling and type checking Typescript code is two separate steps, one can ignore all the type errors and still get a compiled Javascript code.
+
+On the other hand, Golang will not compile if there are any type errors, and types are not just for the compiler, they are also for the runtime.
+So Golang forces you to write code that is more type-safe, which is a good thing.
+
+## 1.1 Variable Declaration, Initialization and Assignment
+
+There are three ways to declare a variable in Golang.
+
+```go
+// 1. Declare with type and initialize
+var a int = 1
+var b, c int = 1, 2
+
+// 2. Declare and initialize with type inference
+var a = 1 // a is of type int
+var b, c = 1, 2 // b and c are of type int
+
+// 3. Declare and initialize with short variable declaration
+a := 1 // a is of type int
+b, c := 1, 2 // b and c are of type int
+```
+
+Multiple assignment might not seem useful at first, but it is actually quite useful when you want to swap two variables.
+
+```go
+var a int = 1
+var b int = 2
+
+a, b = b, a // a is now 2, b is now 1
+```
+
+It is also useful when you want to return multiple values from a function.
+
+```go
+func swap(a int, b int) (int, int) {
+  return b, a
+}
+
+var a int = 1
+var b int = 2
+
+a, b = swap(a, b) // a is now 2, b is now 1
+```
+
+Many functions in Golang return multiple values, so you will see this pattern a lot. We can also discard the values we don't need by using the blank identifier `_`.
+
+```go
+a, _ = swap(a, b) // a is now 2, and I don't care about the second value
+```
+
+### Short variable declaration VS `var`
+
+Although short variable declaration is the most concise way, you can only use it inside a function, and you must also assign a value to the variable at declaration.
+
+`var` gives more control over the variable, so you can declare a variable without initializing it, and you can also declare multiple variables at once.
+
+```go
+// Declare without initializing
+var a int
+// ... later in code
+a = 1
+
+// Grouping with var
+var (
+  a int
+  b int
+)
+```
+
+### **Must know: The zero value** ([Docs](https://golang.org/ref/spec#The_zero_value))
+
+In Golang, variables are always initialized to a zero value, which is a default value for the type.
+For example, the zero value for `int` is `0`, and the zero value for `string` is `""`.
+
+```go
+var a int // a is now 0
+var b string // b is now ""
+```
+
+## 1.2 Constants
+
+Constants are variables whose values cannot be changed after initialization.
+The syntax for declaring constants is similar to variables, but you use the `const` keyword instead of `var`.
+Also, you must initialize a constant at declaration, and you cannot use the short **_variable_** declaration syntax.
+
+```go
+const a int64 = 1
+const b = 1 // a is of type int
+```
+
+## 1.3 Types in Golang ([Docs](https://golang.org/ref/spec#Types))
+
+### 1.3.1 Boolean
+
+```go
+// Boolean
+var isTrue bool = true
+```
+
+### 1.3.2 Numeric
+
+```go
+// Numeric
+var int_num int = 1
+
+var int8_num int8 = 1
+var int16_num int16 = 1
+var int32_num int32 = 1
+var int64_num int64 = 1
+
+var uint_num uint = 1
+
+var uint8_num uint8 = 1
+var uint16_num uint16 = 1
+var uint32_num uint32 = 1
+var uint64_num uint64 = 1
+
+var float32_num float32 = 1.0
+var float64_num float64 = 1.0
+
+// Complex
+var complex64_num complex64 = 1 + 1i
+var complex128_num complex128 = 1 + 1i
+
+// Byte (alias for uint8)
+var byte_value byte = 1
+```
+
+As you can see, Golang has a lot of numeric types, and it can be confusing at first.
+The reason for having so many numeric types is to provide more control over the memory usage.
+For example, if you know that a variable will never be larger than 255, you can use `uint8` instead of `uint64` to save memory.
+
+One thing to note is that `int` and `uint` are platform dependent, which means that they can be either 32-bit or 64-bit.
+If the go compiler is running on a 32-bit machine, `int` and `uint` will be 32-bit, otherwise they will be 64-bit.
+
+Also, Golang has two types for representing numbers with decimal points, `float32` and `float64`.
+The reason for having two types is that `float32` is more performant than `float64`, but it is less precise.
+So if you need to do precise calculations, you should use `float64`.
+
+### 1.3.3 String and rune ([Docs](https://golang.org/ref/spec#String_types)) ([Go blog](https://go.dev/blog/strings))
+
+```go
+// String
+var str string = "Hello World"
+// Rune
+var rune_value rune = 'a'
+```
+
+In Go, a string is a read-only slice (just treat it as array first, we will come back to it later) of bytes, and a rune (single character) is an alias for `int32`.
+Strings must be quoted with double quotes `"`, and runes must be quoted with single quotes `'`.
+
+### 1.3.4 Array and slices ([Docs](https://golang.org/ref/spec#Array_types)) ([Go Blog](https://go.dev/blog/slices-intro))
+
+#### Arrays
+
+An array is a fixed-length sequence of elements of a single type. The zero value of an array is an array with all elements set to their zero value.
+
+Arrays can be defined like this:
+
+```go
+// 1. Define with type and length
+var arr [3]int // arr is now [0, 0, 0]
+
+// 2. Define with type, length and initialize
+var arr [3]int = [3]int{1, 2, 3} // arr is now [1, 2, 3]
+
+// Unfilled elements will be initialized to zero value
+var arr [3]int = [3]int{1, 2} // arr is now [1, 2, 0]
+
+// 3. Define with type, length and initialize (short syntax)
+var arr = [3]int{1, 2, 3} // arr is now [1, 2, 3]
+
+// 4. Define with type, length and initialize (short syntax)
+arr := [3]int{1, 2, 3} // arr is now [1, 2, 0]
+
+// 5. Define with type and initialize, the length will be determined by the number of elements
+arr := [...]int{1, 2, 3} // arr is now [1, 2, 3]
+```
+
+#### Slices
+
+Slices are much more common than arrays in Golang, and they are more flexible than arrays.
+
+Slices can be defined like arrays, but without the length. The zero value of a slice is `nil`.
+
+```go
+// 1. Define with type and initialize
+var slice []int = []int{1, 2, 3} // slice is now [1, 2, 3]
+
+// 2. Define with type and initialize (short syntax)
+slice := []int{1, 2, 3} // slice is now [1, 2, 3]
+
+// 3. Uninitialized slice
+var slice []int // slice is now nil
+fmt.Println(slice == nil) // true
+fmt.Println(slice) // still gives [], but it IS nil
+```
+
+Slices can also be created from "slicing" an array or another slice.
+
+```go
+var arr = [3]int{1, 2, 3}
+var slice = arr[0:2] // slice is now [1, 2]
+
+var slice = []int{1, 2, 3, 4}
+var slice2 = slice[1:] // slice2 is now [2, 3, 4]
+```
+
+#### Relationship between arrays and slices, capacity and length
+
+Every slice has an underlying array, and the slice is like a "View" into the array.
+When you slice an array or a slice, you are creating a new slice that points to the same underlying array.
+Therefore, if you change the value of an element in the array, the value of the element in the slice will also change.
+
+```go
+var arr = [3]int{1, 2, 3}
+var slice = arr[1:] // slice is now [2, 3]
+
+slice[1] = 4
+fmt.Println(arr) // arr is now [1, 2, 4]
+fmt.Println(slice) // slice is now [2, 4]
+```
+
+The length of a slice is always less than or equal to the length of the underlying array.
+
+Consider the following:
+
+```go
+var arr = [6]string{"g", "o", "l", "a", "n", "g"}
+var slice = arr[2:4] // slice is now ["l", "a"]
+
+fmt.Println(len(slice)) // 2
+fmt.Println(cap(slice)) // 4
+```
+
+As the slice current contains 2 elements, the length of `slice` is 2.
+
+The capacity of `slice` is 4 because the length of the underlying array is 6, and the slice starts at index 2, the slice window can expand to index 5, including at most 4 elements.
+
+#### Appending to slices
+
+You can append elements to a slice using the `append` function.
+
+```go
+var slice = []int{1, 2, 3}
+slice = append(slice, 4) // slice is now [1, 2, 3, 4]
+```
+
+As the slice is linked to the underlying array, if the array is full, `append` will create a new array and copy the elements to the new array.
+Otherwise, it will just expand the "view" of the slice and overwrite the value of the element in the underlying array.
+
+```go
+var arr = [4]int{1, 2, 3, 4}
+var slice = arr[0:3] // slice is now [1, 2, 3]
+fmt.Println(len(slice)) // 3
+
+slice = append(slice, 5) // slice is now [1, 2, 3, 5]
+fmt.Println(len(slice)) // 4
+fmt.Println(arr) // arr is now [1, 2, 3, 5], "4" is replaced by "5"
+
+// At this point, the slice is full because the right index of the slice reaches the end of the underlying array
+slice = append(slice, 6) // slice is now [1, 2, 3, 4, 5, 6]
+// Golang will create a new array and copy the elements to the new array
+fmt.Println(arr) // arr is still [1, 2, 3, 5], "6" is not appended to the array.
+```
+
+### 1.3.5 Structs ([Docs](https://golang.org/ref/spec#Struct_types))
+
+Structs are similar to objects/classes in Typescript, used to group related data together.
+
+```go
+type Person struct {
+  name string
+  age int
+}
+
+// Using positional arguments
+var persion1 Person = Person{"hinsxd", 18}
+
+// Using named arguments
+var person2 Person = Person{
+  name: "hinsxd",
+  age: 18,
+}
+```
+
+When using named arguments, all unfilled fields will be initialized to their zero value.
+When using positional arguments, you must provide all fields in the struct.
+
+```go
+type Person struct {
+  name string
+  age int
+}
+
+var person Person = Person{
+  name: "hinsxd",
+}
+fmt.Println(person) // {hinsxd 0}
+
+// You can also use positional arguments
+var person2 Person = Person{"hinsxd"} // Error: too few values in struct initializer
+var person2 Person = Person{"hinsxd", 18} // OK
+```
+
+We should always use named arguments when initializing structs, as it is more readable and less error-prone.
+If we use positional arguments, we might accidentally swap the order of the arguments, and either leading to a bug or making the compiler complain.
+
+### 1.3.6 Pointers ([Docs](https://golang.org/ref/spec#Pointer_types))
+
+Pointer types are used to represent the memory address of a value. For example, `*int` denotes a pointer to a variable of type `int`. We can get the address of a variable by using the `&` operator.
+
+When we already have a pointer, we can use the `*` operator to get the value of the variable it points to.
+
+```go
+var a int = 1
+var b *int = &a // b is now the memory address of a
+var c int = *b // c is now 1
+```
+
+The zero value of a pointer is `nil`, meaning that a pointer can pointer to nothing. We can use the `new` function to create a pointer to a zero value.
+
+```go
+var a *int // a is now nil
+var b *int = new(int) // b is now a pointer to an int with value 0
+```
+
+When dealing with pointers, we should always check if the pointer is nil before dereferencing it, otherwise it will cause a runtime error.
+
+```go
+var a *int // a is now nil
+fmt.Println(*a) // Error: runtime error: invalid memory address or nil pointer dereference
+```
+
+#### When to use Pointers?
+
+When we pass a variable to a function, the function will create a copy of the variable, and any changes to the variable inside the function will not affect the original variable.
+
+Therefore if we want to modify the original variable inside the function, we have to pass a pointer to the variable. This is especially useful when we want to modify a struct.
+
+```go {8, 10}
+type Person struct {
+  name string
+  age int
+}
+
+// This function receives a pointer to a Person
+func changeName(person *Person, name string) {
+  (*person).name = name
+  // this also works, and we usually do this
+  person.name = name
+}
+
+var person Person = Person{
+  name: "hinsxd",
+  age: 18,
+}
+
+changeName(&person, "hinsxd2")
+fmt.Println(person) // {hinsxd2 18}
+```
+
+Notice line, 8 and 10, we can skip "depointerizing" the pointer, and Golang will automatically do it for us.
+
+> To access the field X of a struct when we have the struct pointer p we could write (\*p).X. However, that notation is cumbersome, so the language permits us instead to write just p.X, without the explicit dereference.
+>
+> -- from [A tour to Go - Pointers to structs](https://go.dev/tour/moretypes/4)
+
+## 1.4 Type conversion
+
+Golang is a statically typed language, so you cannot convert a variable to another type without explicitly telling the compiler.
+
+```go
+var a int = 1
+var b int64 = 1
+
+// This will not compile
+a = b
+```
+
+To convert a variable to another type, you can use the following syntax: `T(x)`, where `T` is the type you want to convert to, and `x` is the variable you want to convert.
+
+**_Don't mix it up with a function call! When confused, take a deep breath and check whether `T` is a type or a function!_**
+
+We should note that only convert a variable `x` to a type `T` if `x` is representable by a value of `T` (Read more: [Representability](https://go.dev/ref/spec#Representability))
+
+There are less magical conversions (type coercions) in Golang than in Typescript, so you have to be careful when converting types.
+
+```go
+var a int = 1
+var b int64 = 1
+
+// This will compile
+var c int = int(b)
+
+// This will not compile
+var d bool = bool(a) // Error: cannot convert a (variable of type int) to type bool
+```
+
+Type conversion does not work on slice/array types. You have to copy the elements to a new slice/array using loops.
+
+```go
+var arr = []int{1, 2, 3}
+var arr2 = ([]int64)(arr) // Error: cannot convert arr (variable of type []int) to type []int64
+
+var arrInt64 [3]int64
+for i, v := range arr {
+  // Convert each element to int64
+  arrInt64[i] = int64(v)
+}
+```
+
+## 1.5 Type definition and type alias
+
+### 1.5.1 Type definition
+
+We can define custom types using the `type TypeName Definition` keyword.
+While the most common use case is to define structs, we can also define custom types for primitive types.
+
+With custom types, we can define methods on them, which we will talk about later.
+
+```go
+
+type MyStruct struct {
+  //          ^ type definition starts here
+  name string
+  age int
+}
+```
+
+```go
+type MyInt int
+
+func (i MyInt) addOne() MyInt {
+  return i + 1
+}
+
+var a MyInt = 1
+fmt.Println(a.addOne()) // 2
+
+var b int = 1
+fmt.Println(b.addOne()) // Error: cannot call pointer method on b (variable of type int)
+
+// We can convert a int to MyInt
+var c = MyInt(b)
+fmt.Println(c.addOne()) // 2
+```
+
+### 1.5.2 Type alias
+
+Type alias is used to give a new name to an existing type. The newly named type will behave identically with the original type.
+
+```go
+type NumberList = []int
+// Now NumberList is an alias for []int,
+```
+
+# 2. Functions, Methods and Interfaces
+
+## 2.1 Functions
+
+Functions are defined using the `func` keyword, and they can be defined at the package level or inside another function.
+
+```go
+// Function at package level
+// A function that takes an int and returns an int
+func addOne(a int) int {
+  return a + 1
+}
+
+func main() {
+  // Function inside another function
+  addTwo := func(a int) int {
+    return a + 2
+  }
+
+  fmt.Println(addOne(1)) // 2
+  fmt.Println(addTwo(1)) // 3
+}
+```
+
+We can also define new types for functions, and use them as function parameters.
+
+This concept is similar to typescript function types and providing reusability and type safety for callbacks.
+
+```go
+type IntProcessor func(int) int
+
+func processInt(a int, processor IntProcessor) int {
+  return processor(a)
+}
+
+func addOne(v int) int {
+  return v + 1
+}
+func double(v int) int {
+  return v + 1
+}
+
+func main() {
+  fmt.Println(processInt(1, addOne)) // 2
+  fmt.Println(processInt(5, double)) // 10
+}
+```
+
+The Typescript version looks almost identical:
+
+```ts
+type IntProcessor = (v: number) => number
+
+function processInt(a: number, processor: IntProcessor): number {
+  return processor(a)
+}
+
+function addOne(v: number): number {
+  return v + 1
+}
+
+function double(v: number): number {
+  return v + 1
+}
+
+console.log(processInt(1, addOne)) // 2
+console.log(processInt(5, double)) // 10
+```
+
+## 2.2 Methods ([Docs](https://golang.org/ref/spec#Method_declarations))
+
+> A method is a function with a receiver.
+
+The term `method` is almost the same as class methods in Typescript, but there are some differences.
+
+Golang:
+
+```go
+type Person struct {
+  name string
+  age int
+}
+
+// This is a method of Person
+func (p Person) getName() string {
+  //  ^ receiver. Similar to "this" in Typescript
+  return p.name
+}
+```
+
+Typescript:
+
+```ts
+class Person {
+  name: string
+  age: number
+
+  // This is a method of Person
+  getName(): string {
+    return this.name
+  }
+}
+```
+
+There are two types of methods in Golang: value receiver and pointer receiver.
+
+### 2.2.1 Value receiver
+
+**Value** receivers get a **copy** of the variable whenever the method is called, meaning that any changes to the variable inside the method **will not** affect the original one.
+
+```go
+func (p Person) getName() string {
+  //  ^ value receiver
+  return p.name
+}
+func (p Person) setName(name string) string {
+  //  ^ value receiver
+  p.name = name
+}
+
+var person Person = Person{
+  name: "hinsxd",
+  age: 18,
+}
+
+fmt.Println(person.getName()) // hinsxd
+person.setName("hinsxd2")
+fmt.Println(person.getName()) // name is still "hinsxd"
+```
+
+### 2.2.2 Pointer receiver
+
+**Pointer** receivers get a **reference** to the variable whenever the method is called, meaning that any changes to the variable inside the method **will** affect the original one.
+
+```go
+func (*p Person) getName() string {
+  //  ^ pointer receiver
+  return p.name
+}
+func (*p Person) setName(name string) string {
+  //  ^ pointer receiver
+  p.name = name
+}
+
+var person Person = Person{
+  name: "hinsxd",
+  age: 18,
+}
+
+fmt.Println(person.getName()) // hinsxd
+person.setName("hinsxd2")
+fmt.Println(person.getName()) // name is changed to "hinsxd2"
+```
+
+### 2.2.3 Methods on non-struct types
+
+We can also define methods on non-struct types, such as custom primitive types.
+
+```go
+type MyInt int
+
+func (i MyInt) addOne() MyInt {
+  return i + 1
+}
+
+var a MyInt = 1
+fmt.Println(a.addOne()) // 2
+
+var b int = 1
+fmt.Println(b.addOne()) // Error: b.addOne undefined (type int has no field or method addOne)
+
+// We can convert a int to MyInt
+var c = MyInt(b)
+fmt.Println(c.addOne()) // 2
+```
+
+### 2.2.4 Method sets ([Docs](https://golang.org/ref/spec#Method_sets), [FAQ - Why do T and \*T have different method sets?](https://go.dev/doc/faq#different_method_sets))
+
+When defining a method, we are making either `T` or `*T` implement the method.
+
+The method set of a pointer type `*T` is the set of all methods declared with receiver `*T` or `T`,
+while the method set of a non-pointer (concrete) type `T` is the set of all methods declared with receiver `T` only.
+
+<u>
+  This is reasonable because, according to the offical FAQ, we can easily obtain the value by
+  dereferencing the pointer, but we cannot obtain the pointer from the **copied** value.
+</u>
+
+In the following example, `*Person` implements the method `updateName`, and `Person` implements the method `getName`.
+We can say `*Person` also implements the method `getName` because `Person` implements it, but we cannot say `Person` implements the method `updateName`.
+
+Although for convenience ([tutorial](https://go.dev/tour/methods/6), [tutorial](https://go.dev/tour/methods/7)), Golang allows us to call any methods on both the non-pointer type and the pointer type, it does not mean that the non-pointer or pointer type implements the method.
+
+This concept is important when we want to define methods on interfaces, which we will talk about later.
+
+```go
+func (p *Person) updateName(name string) { ... }
+func (p Person) getName() string{ ... }
+
+value := Person{...}
+value.updateName("hinsxd") // OK
+value.getName() // OK
+
+pointer := &p
+pointer.updateName("hinsxd") // OK
+pointer.getName() // OK
+```
+
+### 2.2.5 When to use value receiver and pointer receiver?
+
+1. If the method needs to modify the receiver, the receiver must be a pointer.
+2. If the receiver is a large struct, a pointer receiver is more efficient than a value receiver, as it does not need to copy the struct every time the method is called.
+
+## 2.3 Interfaces ([Docs](https://golang.org/ref/spec#Interface_types))
+
+> An interface type defines a type set. A variable of interface type can store a value of any type that is in the type set of the interface. Such a type is said to implement the interface. The value of an uninitialized variable of interface type is nil.
+
+### 2.3.1 Basic Interfaces
+
+**Basic** Interfaces are interfaces that only include a list of methods (possibly none). Any type that implements all the methods in the interface is said to have implemented the interface.
+
+```go
+type Person interface {
+  getName() string
+}
+
+type Student struct {
+  name string
+}
+
+// Student has the method `getName`, so it implements the interface `Person`
+func (s Student) getName() string {
+  return s.name
+}
+
+type RandomGuy struct {
+  id int
+}
+
+// Although a Random does not has a field `name`, it still has a method `getName`, so it implements the interface `Person` too.
+func (r RandomGuy) getName() string {
+  return fmt.Sprintf("RandomGuy %d", r.id)
+}
+```
+
+In the above example, we can see that an interface does not care about the internal structure of the type, it only cares about the methods.
+
+#### Using interfaces - Variable assignment
+
+We can assign a value of a type to a variable of an interface type if the type implements the interface.
+
+```go
+var student Student = Student{
+  name: "hinsxd",
+}
+var person Person = student // OK
+
+var randomGuy Person = RandomGuy{
+  id: 1,
+} // OK
+```
+
+#### Using interfaces - Function parameters
+
+We can use interfaces as function parameters, and the function can accept any type that implements the interface.
+
+```go
+func printName(person Person) {
+  fmt.Println(person.getName())
+}
+
+var student Student = Student{
+  name: "hinsxd",
+}
+printName(student) // hinsxd
+
+var randomGuy RandomGuy = RandomGuy{
+  id: 1,
+}
+printName(randomGuy) // RandomGuy 1
+```
+
+#### Using interfaces - Type assertion
+
+Suppose we have an interface value `i` and a concrete type `T`, we can assert the interface value `i` to the type `T` in two ways:
+
+```go
+// 1. Assert to a type, panic if the type assertion fails
+v := i.(T)
+
+// 2. Assert to a type. When failing, return the zero value of type T and false
+v, ok := i.(T)
+```
+
+In the above example, the first way returns a single value of type `T` if the assertion succeeds, and panics otherwise.
+It can come handy when we want to use the result directly, and we are sure that the assertion will succeed.
+
+In other cases, we should use the second way, as it is more safe and idiomatic.
+
+Example of using the second way with the `Person` interface:
+
+```go
+func checkPermission(person Person) bool {
+  // Assert `person` to `Student`, and check if the assertion succeeds
+  if student, ok := person.(Student); ok {
+    // If type assertion succeeds, the person is a student, we can let him in
+    return true
+  }
+  // The person is not a student and not permitted to enter!
+  return false
+}
+```
+
+#### Caveat: Pointer and non-pointer types
+
+Remember the method sets we talked about earlier? It is important when we want to define methods on interfaces.
+
+Using the above example with `Person`, `Student` and `RandomGuy`, we can see that both `Student` and `RandomGuy` implement the interface `Person`, and it can be assigned to a variable of type `Person`.
+
+```go
+func (s Student) getName() string
+func (r RandomGuy) getName() string
+
+var person Person = Student{...} // OK
+var person Person = RandomGuy{...} // OK
+```
+
+Originally we chose to use a value receiver for the method `getName` because we don't need to modify the receiver.
+Now we want to modify the name of the a `Person`, so we add a method `setName` to the interface `Person`.
+
+```go
+type Person interface {
+  getName() string
+  setName(name string)
+}
+```
+
+As a result, we need to implement the method `setName` for both `Student` and `RandomGuy`. This method needs to modify the receiver, so we have to use a pointer receiver.
+
+```go
+func (s *Student) setName(name string) {
+  s.name = name
+}
+
+func (r *RandomGuy) setName(name string) {
+  // random guy doesn't have a name, just ignore it
+}
+```
+
+However, the method set of `Student` does not include the method `setName`, so `Student` does not implement the interface `Person` anymore.
+On the other hand, the method set of `*Student` includes the method `setName`, so `*Student` implements the interface `Person`.
+
+So, we need to pass the pointer of `Student` to the interface `Person`.
+
+```diff-go
+func (s Student) getName() string
+func (s *Student) setName(name string)
+
+- var person Person = Student{...} // Error: cannot use Student{…} (value of type Student) as Person value in variable declaration: Student does not implement Person (method updateName has pointer receiver)
++ var person Person = &Student{...} // OK
+```
+
+In order to avoid confusion and breaking changes in code, we should carefully plan and choose between value receiver and pointer receiver when defining methods on interfaces.
+
+### 2.3.2 Empty Interfaces (`interface{}`, `any`)
+
+Empty interfaces are interfaces that do not have any methods, and any type with 0 or more methods implements the empty interface.
+
+`any` is an alias for `interface{}` since Go 1.18.
+
+Since empty interfaces do not have any methods, we can assign any type to a variable of type `interface{}`.
+
+```go
+var a interface{} = 1
+var b interface{} = "Hello World"
+var c interface{} = []int{1, 2, 3}
+```
+
+Empty interfaces are useful when we want to create a function that accepts any type.
+We have to use type assertion to get the value of the interface.
+
+```go
+func printType(v interface{}) {
+  switch v.(type) {
+  case int:
+    fmt.Println("It's an int!")
+  case string:
+    fmt.Println("It's a string!")
+  case []int:
+    fmt.Println("It's a slice of int!")
+  }
+}
+
+printType(1) // It's an int!
+printType("Hello World") // It's a string!
+printType([]int{1, 2, 3}) // It's a slice of int!
+```
