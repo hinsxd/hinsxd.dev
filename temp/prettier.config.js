@@ -1,8 +1,0 @@
-module.exports = {
-  semi: true,
-  printWidth: 80,
-  arrowParens: "always",
-  singleQuote: false,
-  tabWidth: 2,
-  useTabs: false,
-};
