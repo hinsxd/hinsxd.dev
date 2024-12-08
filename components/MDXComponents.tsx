@@ -9,8 +9,12 @@ import TableWrapper from './TableWrapper'
 export const components: MDXComponents = {
   Image,
   TOCInline,
+  // @ts-ignore
   a: CustomLink,
+  // @ts-ignore
   pre: Pre,
   table: TableWrapper,
+  CodeSandBox,
   BlogNewsletterForm,
 }
+import { CodeSandBox } from '@/components/CodeSandBox'
