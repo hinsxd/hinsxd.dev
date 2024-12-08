@@ -37,7 +37,17 @@
 
 .line-number::before {
   @apply -ml-2 mr-4 inline-block w-4 text-right text-gray-400;
+  /* @apply -ml-2 inline-block w-[5ch] pr-[1ch] text-right text-gray-400 bg-gray-700; */
   content: attr(line);
+}
+
+.line-number.deleted::before,
+.line-number.inserted::before {
+  margin-right: calc(1rem - 1ch);
+}
+
+.line-number:not(.deleted, .inserted)::before {
+  margin-right: calc(1rem + 1ch);
 }
 
 /* Token styles */
